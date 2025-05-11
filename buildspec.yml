@@ -1,0 +1,42 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9  # O la que uses tú (ej: 3.9)
+    commands:
+      - echo "[INSTALACIÓN] Instalando dependencias..."
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
+      - pip install pytest pytest-mock
+  pre_build:
+    commands:
+      - echo "[TEST] Ejecutando pruebas unitarias..."
+      - PYTHONPATH=src pytest src/tests/ --junitxml=report.xml
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 777447255488.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - docker build -t python_app .
+      - docker tag python_app:latest 777447255488.dkr.ecr.us-east-1.amazonaws.com/python_app:latest
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push 777447255488.dkr.ecr.us-east-1.amazonaws.com/python_app:latest
+      - echo Writing Image Definitions file...
+      - printf '[{"name":"contenedor-entrega3","imageUri":"777447255488.dkr.ecr.us-east-1.amazonaws.com/python_app"}]' > imagedefinitions.json
+      - printf '{"ImageURI":"777447255488.dkr.ecr.us-east-1.amazonaws.com/python_app"}' > imageDetail.json
+      - cat imagedefinitions.json 
+artifacts:
+  files:
+    - '**/*'
+    - imagedefinitions.json
+    - imageDetail.json
+  secondary-artifacts:
+    DefinitionArtifact:
+      files:
+        - appspec.yaml
+        - taskdef.json
+    ImageArtifact:
+      files:
+        - imageDetail.json
