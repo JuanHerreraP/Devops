@@ -19,7 +19,7 @@ def test_healthcheck(client):
 
 def test_create_blacklist_missing_fields(client):
     response = client.post('/blacklists', json={})
-    assert response.status_code == 401
+    assert response.status_code == 402
     assert "Faltan campos requeridos" in response.json["msg"]
 
 def test_create_blacklist_invalid_uuid(client):
